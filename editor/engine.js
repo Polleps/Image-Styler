@@ -1,7 +1,7 @@
 const { nativeImage } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const imageDataHandler = require('./imageDataHandler.js');
+const { flattenMatrix, convertToMatrix } = require('../editor/imageDataHandler'); 
 const $ = document;
 const trInputRangeElement = $.querySelector('#trInputRange');
 const trInputNumberElement = $.querySelector('#trInputNum');
@@ -10,11 +10,8 @@ const imgSrc = imgElement.getAttribute('src')
 trInputRangeElement.addEventListener('change', applyFilter);
 trInputNumberElement.addEventListener('change', applyFilter);
 const rRamp = ramp(0, 255, 1);
-const images = [
-    "suburbs.jpeg",
-];
 
-applyFilter({target: {value: 0}});
+applyFilter({target: {value: 2}});
 
 function applyFilter(event){
 
@@ -22,43 +19,74 @@ function applyFilter(event){
     trInputNumberElement.value = event.target.value;
 
     const ogSrc = nativeImage.createFromPath(path.join(__dirname, imgSrc));
-    let bitMapData = ogSrc.toBitmap()
-    
-    manipulateImg(ogSrc.getBitmap, event.target.value, ogSrc.getSize());
-    
-    const jpg = ogSrc.toJpeg(100);
-    
-    fs.writeFile(path.join(__dirname, '../img/editing.jpeg'), jpg, err => {
-        imgElement.setAttribute('src', '../img/editing.jpeg#' + new Date().getTime());
+    manipulateImg(ogSrc.toBitmap(), event.target.value, ogSrc.getSize()).then(manipulatedData => {
+        //console.log(manipulatedData);
+        const jpg = nativeImage.createFromBuffer(manipulatedData,ogSrc.getSize()).toJPEG(100);
+        
+        fs.writeFile(path.join(__dirname, '../img/editing.jpeg'), jpg, err => {
+            imgElement.setAttribute('src', '../img/editing.jpeg#' + new Date().getTime());
+        });
     });
+    
 }
 
 
 function manipulateImg(data, ...args) {
-    const tData = [ ...data ];
-    const tr = args[0];
-    const size = args[0];
-    const matrix = imageDataHandler.convertToMatrix(tData, size);
-
-    for(let x = 0; x < matrix.length; x += 2) {
-        for(let y = 0; y < matrix[x].length; x += 2) {
-            const avg = avarage(matrix[x][y], matrix[x][y + 1], matrix[x + 1][y], matrix[x + 1][y + 1]);
-            matrix[x][y] = avg;
-            matrix[x][y + 1] = avg;
-            matrix[x + 1][y] = avg;
-            matrix[x + 1][y + 1] = avg;
+    return new Promise((resolve, reject) => {
+        console.log(typeof data);
+        const tData = data.slice(0);
+        const tr = Number(args[0]);
+        console.log('TR', tr);
+        const size = args[1];
+        convertToMatrix(tData, size).then(matrix => {
+            for(let x = 0; x < matrix.length; x += tr) {
+                if(matrix[x] !== undefined) {
+                    for(let y = 0; y < matrix[x].length; y += tr) {
+                        if(x + tr - 1 < matrix.length && y + tr - 1 < matrix[x].length){
+                            let block = [];
+    
+                            for (let bx = 0; bx < tr; bx++) {
+                                for (let by = 0; by < tr; by++) {
+                                    block.push(matrix[x + bx][y + by]);
+                                }
+                            }
+    
+                            const avg = avarage(block);
+    
+                            for (let bx = 0; bx < tr; bx++) {
+                                for (let by = 0; by < tr; by++) {
+                                    matrix[x + bx][y + by] = avg;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                
         }
-    }
 
-    data = imageDataHandler.flattenMatrix(matrix);
+        resolve(Uint8Array.from(flattenMatrix(matrix))); 
+    });
+    
+    });
+
+    
 }
 
-function avarage(...pixels) {
+function avarage(pixels) {
     const total = { B: 0, G: 0, R: 0, A: 255};
     pixels.forEach(pixel => {
-        total.B += pixel.B;
-        total.G += pixel.G;
-        total.R += pixel.R;
+        if(pixel !== undefined){
+            total.B += pixel.B;
+            total.G += pixel.G;
+            total.R += pixel.R;
+        }
+        else {
+            total.B += 255;
+            total.G += 255;
+            total.R += 255;
+        }
+        
     })
     const avg = { B: total.B / pixels.length, G: total.G / pixels.length, R: total.R / pixels.length, A: 255};
     return  avg;
@@ -97,7 +125,6 @@ function* ramp(min, max, step) {
         yield count;
     }
 }
-
 
 
 // function manipulateImg(data, ...args) {
