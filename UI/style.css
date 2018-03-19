@@ -1,0 +1,32 @@
+body {
+    margin: 0px;
+    padding: 0px;
+    background: rgb(231, 231, 231);
+}
+
+.app {
+    display: grid;
+    grid-template-columns: 1fr 5fr 1fr;
+    grid-template-rows: auto;
+    grid-template-areas: 
+    "header header header"
+    ". imageView ."
+    ". controls ."
+}
+header {
+    grid-area: header;
+    background: gray;
+}
+.img-holder {
+   grid-area: imageView;
+}
+
+.img-controls {
+    grid-area: controls;
+    background: gray;
+    padding: 10px;
+}
+
+.image {
+    width: 100%;
+}

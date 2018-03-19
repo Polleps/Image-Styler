@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Image Styler!</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>open</header>
+    <div class="app">
+            <div class="img-holder">
+                <img src="../img/red_woman_1080.jpeg" alt="image" class="image">
+                <!-- <img src="../img/suburbs.jpeg" alt="image" class="image"> -->
+            </div>
+            <div class="img-controls">
+                <div class="tr-holder">
+                    <label for="tr">Threshold</label>
+                    <input type="range" name="tr" min="0" max="255" id="trInputRange" value="10">
+                    <input type="number" id="trInputNum" value="10">
+                </div>
+                
+            </div>
+    </div>
+    <script src="../editor/engine.js"></script>
+</body>
+</html>
