@@ -35,9 +35,10 @@ function manipulateImg(data, ...args) {
     return new Promise((resolve, reject) => {
         console.log(typeof data);
         const tData = data.slice(0);
-        const tr = Number(args[0]);
-        console.log('TR', tr);
+        const ps = Number(args[0]);
         const size = args[1];
+        const tr = findNearestDivision(ps, size);
+        console.log('PS / TR', ps, tr);
         convertToMatrix(tData, size).then(matrix => {
             for(let x = 0; x < matrix.length; x += tr) {
                 if(matrix[x] !== undefined) {
@@ -90,6 +91,14 @@ function avarage(pixels) {
     })
     const avg = { B: total.B / pixels.length, G: total.G / pixels.length, R: total.R / pixels.length, A: 255};
     return  avg;
+}
+
+function findNearestDivision(n, size) {
+    let i = (n >= 1) ? n : 2;
+    for (i; i >= 1; i = i - 1) {
+        if(size.width % i == 0 && size.height -1 % i == 0) return i;
+    }
+    return i
 }
 
 function mapPixelPurple(B, G, R, tr) {
